@@ -41,6 +41,7 @@ def main():
     
     fwd_uid_list = [uid_item for uid_item in uid_list if uid_item[1] not in processed_email_uids]
     if len(fwd_uid_list) == 0:
+        print('No new emails to forward.')
         mailbox.close()
         return
 
@@ -48,9 +49,6 @@ def main():
     sender.login(NTUMAIL_ADDRESS.split('@')[0], NTUMAIL_PASSWORD)
 
     for index, uid in fwd_uid_list:
-        if uid in processed_email_uids:
-            continue  # 跳過已處理的郵件
-        
         _, lines, _ = mailbox.retr(index)
         raw_message = b'\r\n'.join(lines)
         
@@ -69,6 +67,8 @@ def main():
         sender.send_message(orig_msg)
         
         file.write(f'{uid}\n')  # 記錄已處理的郵件 UID
+
+    print(f'Forwarded {len(fwd_uid_list)} new emails.')
 
     mailbox.close()
     sender.quit()
