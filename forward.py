@@ -29,6 +29,7 @@ def main():
     uid_list: list[tuple[str, str]] = [uid.decode().split() for uid in uid_list]
 
     if not os.path.exists('fwds.txt'):
+        print('fwds.txt not found. Creating a new one and marking all emails as forwarded to avoid dumping all emails.')
         with open('fwds.txt', 'w', encoding='utf-8') as f:
             f.writelines(f'{uid}\n' for _, uid in uid_list)
         mailbox.close()    
@@ -54,16 +55,16 @@ def main():
         raw_message = b'\r\n'.join(lines)
         
         orig_msg = email.message_from_bytes(raw_message)
-        orig_subject = orig_msg.get("Subject", "無主旨")
+        orig_subject = orig_msg.get('Subject', '無主旨')
                     
         # 解碼原始標題
         orig_subject, encoding = decode_header(orig_subject)[0]
         if isinstance(orig_subject, bytes):
             orig_subject = orig_subject.decode(encoding or 'utf-8')
         
-        orig_msg.replace_header("Subject", f'[NTUMail 轉寄] {orig_subject}')
-        orig_msg.replace_header("From", NTUMAIL_ADDRESS)
-        orig_msg.replace_header("To", FORWARDING_ADDRESSES)
+        orig_msg.replace_header('Subject', f'[NTUMail 轉寄] {orig_subject}')
+        orig_msg.replace_header('From', NTUMAIL_ADDRESS)
+        orig_msg.replace_header('To', FORWARDING_ADDRESSES)
         
         sender.send_message(orig_msg)
         
