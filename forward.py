@@ -16,8 +16,6 @@ NTUMAIL_ADDRESS = os.getenv('NTUMAIL_ADDRESS')
 NTUMAIL_PASSWORD = os.getenv('NTUMAIL_PASSWORD')
 FORWARDING_ADDRESSES = os.getenv('FORWARDING_ADDRESSES')
 
-NTUMAIL_USER = NTUMAIL_ADDRESS.split('@')[0]
-
 if not all([NTUMAIL_ADDRESS, NTUMAIL_PASSWORD, FORWARDING_ADDRESSES]):
     raise ValueError('Missing required environment variables.')
 
@@ -46,7 +44,7 @@ def main():
         return
 
     sender = smtplib.SMTP_SSL(NTUMAIL_SMTP_HOST, NTUMAIL_SMTP_PORT)
-    sender.login(NTUMAIL_USER, NTUMAIL_PASSWORD)
+    sender.login(NTUMAIL_ADDRESS.split('@')[0], NTUMAIL_PASSWORD)
 
     for index, uid in fwd_uid_list:
         if uid in processed_email_uids:
@@ -70,11 +68,9 @@ def main():
         sender.send_message(orig_msg)
         
         file.write(f'{uid}\n')  # 記錄已處理的郵件 UID
-        break
 
     mailbox.close()
     sender.quit()
-    file.flush()
     file.close()
 
 if __name__ == '__main__':
