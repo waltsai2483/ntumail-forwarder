@@ -1,0 +1,47 @@
+name: Forward Mail
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  forward:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run mail forwarder
+        env:
+          NTUMAIL_ADDRESS: ${{ secrets.NTUMAIL_ADDRESS }}
+          NTUMAIL_PASSWORD: ${{ secrets.NTUMAIL_PASSWORD }}
+          FORWARDING_ADDRESSES: ${{ secrets.FORWARDING_ADDRESSES }}
+          NTUMAIL_POP3_HOST: ${{ secrets.NTUMAIL_POP3_HOST || 'msa.ntu.edu.tw' }}
+          NTUMAIL_POP3_PORT: ${{ secrets.NTUMAIL_POP3_PORT || '995' }}
+          NTUMAIL_SMTP_HOST: ${{ secrets.NTUMAIL_SMTP_HOST || 'smtps.ntu.edu.tw' }}
+          NTUMAIL_SMTP_PORT: ${{ secrets.NTUMAIL_SMTP_PORT || '465' }}
+        run: python forward.py
+
+      - name: Commit forwarded UIDs
+        run: |
+          if git diff --quiet -- fwds.txt; then
+            echo "No new forwarded UIDs."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add fwds.txt
+          git commit -m "chore: update forwarded mail UIDs"
+          git push
